@@ -5,8 +5,8 @@ pipeline{
         jdk 'Java17'
         maven 'Maven3'
     }
-    // environment {
-        ////// MAVEN_OPTS = "-Dmaven.repo.local=${env.WORKSPACE}/.m2/repository"
+    environment {
+        MAVEN_OPTS = "-Dmaven.repo.local=${env.WORKSPACE}/.m2/repository"
         // APP_NAME = "complete-prodcution-e2e-pipeline"
         // RELEASE = "1.0.0"
         // DOCKER_USER = "dmancloud"
@@ -15,7 +15,7 @@ pipeline{
         // IMAGE_TAG = "${RELEASE}-${BUILD_NUMBER}"
         // JENKINS_API_TOKEN = credentials("JENKINS_API_TOKEN")
 
-    // }
+    }
     stages{
         stage("Cleanup Workspace"){
             steps {
