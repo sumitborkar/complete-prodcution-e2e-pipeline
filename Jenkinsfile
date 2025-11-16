@@ -7,6 +7,7 @@ pipeline{
     }
     environment {
         MAVEN_OPTS = "-Dmaven.repo.local=${env.WORKSPACE}/.m2/repository"
+        SONAR_USER_HOME = "${env.WORKSPACE}/.sonar"
         // APP_NAME = "complete-prodcution-e2e-pipeline"
         // RELEASE = "1.0.0"
         // DOCKER_USER = "dmancloud"
@@ -50,6 +51,7 @@ pipeline{
             steps {
                 script {
                     withSonarQubeEnv(credentialsId: 'jenkins-sonarqube-token') {
+                        sh 'mkdir -p $WORKSPACE/.sonar/cache'
                         sh "mvn sonar:sonar"
                     }
                 }
