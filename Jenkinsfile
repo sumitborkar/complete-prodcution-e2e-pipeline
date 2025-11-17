@@ -58,6 +58,60 @@ pipeline{
             }
 
         }
+        stage('Build & Push Image with Kaniko') {
+            agent {
+                kubernetes {
+                    // This YAML is the Kaniko agent pod spec from above
+                    yaml """
+                    apiVersion: v1
+                    kind: Pod
+                    metadata:
+                    labels:
+                        jenkins: kaniko-agent
+                    spec:
+                    serviceAccountName: jenkins-admin
+                    securityContext:
+                        fsGroup: 1050
+                        runAsUser: 1050
+                    containers:
+                        - name: kaniko
+                        image: gcr.io/kaniko-project/executor:debug
+                        command:
+                            - cat
+                        tty: true
+                        volumeMounts:
+                            - name: docker-config
+                            mountPath: /kaniko/.docker
+                            - name: workspace-volume
+                            mountPath: /home/jenkins/agent
+                    volumes:
+                        - name: docker-config
+                        secret:
+                            secretName: dockerhub-cred
+                            items:
+                            - key: .dockerconfigjson
+                                path: config.json
+                        - name: workspace-volume
+                        emptyDir: {}
+                    """
+                }
+            }
+            stages {
+                stage('Kaniko Build & Push') {
+                    steps {
+                        container('kaniko') {
+                            sh '''
+                              /kaniko/executor \
+                                --context=$WORKSPACE \
+                                --dockerfile=$WORKSPACE/Dockerfile \
+                                --destination=${IMAGE_NAME}:${IMAGE_TAG} \
+                                --verbosity=debug
+                            '''
+                        }
+                    }
+                }
+            }
+        }
 
         // stage("Quality Gate") {
         //     steps {
@@ -68,21 +122,21 @@ pipeline{
 
         // }
 
-        stage("Build & Push Docker Image") {
-            steps {
-                script {
-                    docker.withRegistry('',DOCKER_PASS) {
-                        docker_image = docker.build "${IMAGE_NAME}"
-                    }
+        // stage("Build & Push Docker Image") {
+        //     steps {
+        //         script {
+        //             docker.withRegistry('',DOCKER_PASS) {
+        //                 docker_image = docker.build "${IMAGE_NAME}"
+        //             }
 
-                    docker.withRegistry('',DOCKER_PASS) {
-                        docker_image.push("${IMAGE_TAG}")
-                        docker_image.push('latest')
-                    }
-                }
-            }
+        //             docker.withRegistry('',DOCKER_PASS) {
+        //                 docker_image.push("${IMAGE_TAG}")
+        //                 docker_image.push('latest')
+        //             }
+        //         }
+        //     }
 
-        }
+        // }
 
         // stage("Trivy Scan") {
         //     steps {
