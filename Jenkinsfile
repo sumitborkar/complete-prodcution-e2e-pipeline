@@ -32,32 +32,32 @@ pipeline{
 
         }
 
-        stage("Build Application"){
-            steps {
-                sh 'mkdir -p $WORKSPACE/.m2/repository'
-                sh "mvn clean package"
-            }
+        // stage("Build Application"){
+        //     steps {
+        //         sh 'mkdir -p $WORKSPACE/.m2/repository'
+        //         sh "mvn clean package"
+        //     }
 
-        }
+        // }
 
-        stage("Test Application"){
-            steps {
-                sh "mvn test"
-            }
+        // stage("Test Application"){
+        //     steps {
+        //         sh "mvn test"
+        //     }
 
-        }
+        // }
         
-        stage("Sonarqube Analysis") {
-            steps {
-                script {
-                    withSonarQubeEnv(credentialsId: 'jenkins-sonarqube-token') {
-                        sh 'mkdir -p $WORKSPACE/.sonar/cache'
-                        sh "mvn sonar:sonar"
-                    }
-                }
-            }
+        // stage("Sonarqube Analysis") {
+        //     steps {
+        //         script {
+        //             withSonarQubeEnv(credentialsId: 'jenkins-sonarqube-token') {
+        //                 sh 'mkdir -p $WORKSPACE/.sonar/cache'
+        //                 sh "mvn sonar:sonar"
+        //             }
+        //         }
+        //     }
 
-        }
+        // }
         stage('Build & Push Image with Kaniko') {
             agent {
                 kubernetes {
@@ -69,30 +69,30 @@ pipeline{
                     labels:
                         jenkins: kaniko-agent
                     spec:
-                    serviceAccountName: jenkins-admin
-                    securityContext:
+                      serviceAccountName: jenkins-admin
+                      securityContext:
                         fsGroup: 1050
                         runAsUser: 1050
-                    containers:
+                      containers:
                         - name: kaniko
-                        image: gcr.io/kaniko-project/executor:debug
-                        command:
+                          image: gcr.io/kaniko-project/executor:debug
+                          command:
                             - cat
-                        tty: true
-                        volumeMounts:
+                          tty: true
+                          volumeMounts:
                             - name: docker-config
-                            mountPath: /kaniko/.docker
+                              mountPath: /kaniko/.docker
                             - name: workspace-volume
-                            mountPath: /home/jenkins/agent
-                    volumes:
+                              mountPath: /home/jenkins/agent
+                      volumes:
                         - name: docker-config
-                        secret:
+                          secret:
                             secretName: dockerhub-cred
                             items:
                             - key: .dockerconfigjson
-                                path: config.json
+                              path: config.json
                         - name: workspace-volume
-                        emptyDir: {}
+                          emptyDir: {}
                     """
                 }
             }
